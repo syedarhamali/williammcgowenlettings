@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Property — McGowans</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="rentals">
+
+<div class="phero" style="padding-bottom:70px">
+  <div class="wrap">
+    <div class="crumbs"><a href="index.html">Home</a> / <a href="rentals.html">Rental properties</a> / <b id="crumb">Property</b></div>
+  </div>
+</div>
+
+<section style="padding-top:60px">
+  <div class="wrap" id="root"></div>
+</section>
+
+<section style="background:var(--linen)" id="similarSec">
+  <div class="wrap">
+    <div class="count" style="margin-bottom:46px"><div><span class="kicker">You may also like</span><h2 class="h2" style="margin-top:12px">Similar properties</h2></div><a href="rentals.html" class="btn">All rentals</a></div>
+    <div class="grid3" id="similar"></div>
+  </div>
+</section>
+
+<div class="lb" id="lb"><button class="x" aria-label="Close">×</button><img alt=""></div>
+
+<script src="assets/js/properties.js"></script>
+<script src="assets/js/site.js"></script>
+<script>
+const id = new URLSearchParams(location.search).get("id");
+const p = PROPS.find(x => x.id === id);
+const root = document.getElementById("root");
+const IMG = "assets/img/props/";
+
+if (!p) {
+  root.innerHTML = `<div class="notfound"><h1 class="h2">Property not found</h1><p style="color:var(--soft);margin:16px 0 30px">This listing may have been removed.</p><a href="rentals.html" class="btn solid">Browse rentals</a></div>`;
+  document.getElementById("similarSec").remove();
+} else {
+  document.title = `${p.title} — McGowans`;
+  document.getElementById("crumb").textContent = p.title;
+  const let_ = p.status === "let";
+  root.innerHTML = `
+  <div class="detail">
+    <div>
+      <div class="gallery">
+        <div class="g-main" id="gMain"><img id="gImg" src="${IMG + p.imgs[0]}" alt="${p.title}">
+          ${p.imgs.length > 1 ? `<button class="g-nav g-prev" id="gPrev" aria-label="Previous photo">❮</button><button class="g-nav g-next" id="gNext" aria-label="Next photo">❯</button>` : ""}
+          <span class="g-count" id="gCount">1 / ${p.imgs.length}</span></div>
+        ${p.imgs.length > 1 ? `<div class="thumbs" id="thumbs">${p.imgs.map((s, i) => `<button class="${i ? "" : "on"}" aria-label="Photo ${i + 1}"><img class="cover" src="${IMG + s}" alt=""></button>`).join("")}</div>` : ""}
+      </div>
+
+      <div class="d-head">
+        <div><span class="status ${p.status}">${let_ ? "Let agreed" : "Available!"}</span><h1>${p.full}</h1></div>
+        <div class="d-price"><b>${p.priceLabel}</b><span>per month${p.billsIncluded ? ", bills included" : ""}</span></div>
+      </div>
+
+      <div class="keys">
+        <div class="key"><span class="lbl">Property type</span><b>${p.typeLabel}</b></div>
+        <div class="key"><span class="lbl">Bedrooms</span><b>${p.beds}</b></div>
+        <div class="key"><span class="lbl">Bathrooms</span><b>${p.baths ?? "—"}</b></div>
+        <div class="key"><span class="lbl">Parking</span><b>${p.parking ?? "—"}</b></div>
+      </div>
+
+      <div class="d-block"><span class="kicker">Rental property</span><h2 style="margin-top:12px">About this home</h2>${p.desc.map(t => `<p>${t}</p>`).join("")}</div>
+      ${p.features.length ? `<div class="d-block"><h2>Key features</h2><ul class="feats">${p.features.map(t => `<li>${t}</li>`).join("")}</ul></div>` : ""}
+      <div class="d-block"><h2>Location</h2><p>${p.map}</p>
+        <iframe class="map" loading="lazy" title="Map of ${p.title}" src="https://www.google.com/maps?q=${encodeURIComponent(p.map)}&output=embed"></iframe></div>
+    </div>
+
+    <aside class="aside">
+      <span class="kicker">${let_ ? "Register interest" : "Schedule a viewing"}</span>
+      <h3>${let_ ? "Looking for something similar?" : "Arrange a private viewing"}</h3>
+      <p class="s">Contact our team to receive detailed information or arrange a viewing at your convenience.</p>
+      <a href="tel:02084500845" class="btn solid block">Call 0208 450 0845</a>
+      <div class="or">or send an enquiry</div>
+      <form data-validate data-success="Thanks — we'll contact you about ${p.title} within 24 hours." style="display:grid;gap:22px">
+        <div class="fl"><label>Full name <i>*</i></label><input name="name" required><span class="err">Please enter your name</span></div>
+        <div class="fl"><label>Email address <i>*</i></label><input type="email" name="email" required><span class="err">Please enter a valid email</span></div>
+        <div class="fl"><label>Phone number</label><input type="tel" name="phone"><span class="err">Please enter a valid phone number</span></div>
+        ${let_ ? "" : `<div class="fl"><label>Preferred viewing date</label><input type="date" name="date" min="${new Date().toISOString().slice(0, 10)}"></div>`}
+        <div class="fl"><label>Message</label><textarea name="message" maxlength="180" rows="3">I'm interested in ${p.full}.</textarea><span class="counter"></span></div>
+        <button class="btn block" type="submit" style="margin-top:8px">Send inquiry</button>
+        <div class="ok-msg">Thank you! Your enquiry about ${p.title} has been received.</div>
+      </form>
+    </aside>
+  </div>`;
+  bindForms(root);
+
+  // Gallery
+  let i = 0;
+  const img = document.getElementById("gImg"), cnt = document.getElementById("gCount");
+  const th = [...document.querySelectorAll("#thumbs button")];
+  const show = n => { i = (n + p.imgs.length) % p.imgs.length; img.src = IMG + p.imgs[i]; cnt.textContent = `${i + 1} / ${p.imgs.length}`; th.forEach((b, k) => b.classList.toggle("on", k === i)); };
+  document.getElementById("gPrev")?.addEventListener("click", e => { e.stopPropagation(); show(i - 1); });
+  document.getElementById("gNext")?.addEventListener("click", e => { e.stopPropagation(); show(i + 1); });
+  th.forEach((b, k) => b.onclick = () => show(k));
+  // swipe on touch
+  let sx = null; const gm = document.getElementById("gMain");
+  gm.addEventListener("touchstart", e => sx = e.touches[0].clientX, { passive: true });
+  gm.addEventListener("touchend", e => { if (sx == null) return; const d = e.changedTouches[0].clientX - sx; if (Math.abs(d) > 40) show(i + (d < 0 ? 1 : -1)); sx = null; });
+  // Lightbox
+  const lb = document.getElementById("lb"), lbImg = lb.querySelector("img");
+  gm.addEventListener("click", () => { lbImg.src = img.src; lb.classList.add("open"); });
+  lb.addEventListener("click", e => { if (e.target !== lbImg) lb.classList.remove("open"); });
+  addEventListener("keydown", e => {
+    if (e.key === "Escape") { lb.classList.remove("open"); return; }
+    if (e.target.closest?.("input,textarea,select")) return;
+    if (e.key === "ArrowLeft") show(i - 1);
+    if (e.key === "ArrowRight") show(i + 1);
+    if (lb.classList.contains("open")) lbImg.src = img.src;
+  });
+
+  // Similar
+  const sim = PROPS.filter(x => x.id !== p.id).sort((a, b) => (b.area === p.area) - (a.area === p.area) || (a.status === "let") - (b.status === "let")).slice(0, 3);
+  const s = document.getElementById("similar"); s.innerHTML = sim.map(propCard).join(""); observeReveal(s);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rental Properties — McGowans</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="rentals">
+
+<div class="phero">
+  <img class="bg cover" src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=2000&q=70" alt="">
+  <div class="wrap">
+    <div class="crumbs"><a href="index.html">Home</a> / <b>Rental properties</b></div>
+    <h1>Rental properties</h1>
+    <p>Discover quality rental properties across North West London, carefully selected to suit a variety of lifestyles and requirements.</p>
+  </div>
+</div>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <form class="toolbar" id="filters">
+      <label><span class="lbl">Area</span><select name="area"><option value="">All areas</option><option value="NW10">NW10</option><option value="NW2">NW2</option></select></label>
+      <label><span class="lbl">Type</span><select name="type"><option value="">Any type</option><option value="room">Room</option><option value="flat">Flat / apartment</option></select></label>
+      <label><span class="lbl">Bedrooms</span><select name="beds"><option value="">Any</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option></select></label>
+      <label><span class="lbl">Availability</span><select name="status"><option value="">All</option><option value="available">Available</option><option value="let">Let agreed</option></select></label>
+      <label><span class="lbl">Sort by</span><select name="sort"><option value="">Featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option></select></label>
+      <button type="reset" class="btn">Reset</button>
+      <input type="hidden" name="max">
+    </form>
+
+    <div class="count"><span><b id="n">0</b> properties found</span><span id="active"></span></div>
+    <div class="grid3" id="list"></div>
+    <div class="empty" id="empty">
+      <h3>No properties match your search</h3>
+      <p>Try widening your filters, or ask us to let you know when something suitable comes up.</p>
+      <button class="btn" id="clear">Clear filters</button> <a href="contact.html" class="btn solid">Register interest</a>
+    </div>
+  </div>
+</section>
+
+<script src="assets/js/properties.js"></script>
+<script src="assets/js/site.js"></script>
+<script>
+const f = document.getElementById("filters"), list = document.getElementById("list");
+// Pre-fill from URL (search bar on the home page)
+const qs = new URLSearchParams(location.search);
+for (const [k, v] of qs) if (f.elements[k]) f.elements[k].value = v;
+
+function render() {
+  const v = Object.fromEntries(new FormData(f));
+  let r = PROPS.filter(p =>
+    (!v.area || p.area === v.area) &&
+    (!v.type || p.type === v.type) &&
+    (!v.beds || p.beds >= +v.beds) &&
+    (!v.status || p.status === v.status) &&
+    (!v.max || p.price <= +v.max));
+  if (v.sort === "low") r.sort((a, b) => a.price - b.price);
+  if (v.sort === "high") r.sort((a, b) => b.price - a.price);
+  if (!v.sort) r.sort((a, b) => (a.status === "let") - (b.status === "let"));
+  list.innerHTML = r.map(propCard).join("");
+  document.getElementById("n").textContent = r.length;
+  document.getElementById("empty").style.display = r.length ? "none" : "block";
+  document.getElementById("active").textContent = v.max ? `Max £${(+v.max).toLocaleString()} pcm` : "";
+  // keep URL shareable
+  const p = new URLSearchParams(); for (const [k, x] of Object.entries(v)) if (x) p.set(k, x);
+  history.replaceState(null, "", p.toString() ? "?" + p : location.pathname);
+  observeReveal(list);
+}
+f.addEventListener("change", render);
+f.addEventListener("reset", () => setTimeout(() => { f.elements.max.value = ""; render(); }));
+document.getElementById("clear").onclick = () => f.reset();
+render();
+</script>
+</body>
+</html>
